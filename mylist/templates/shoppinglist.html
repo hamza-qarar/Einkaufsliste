@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        body {
+            margin: 0;
+        }
+
+        header {
+            background-color: purple;
+            display: flex;
+            padding-left: 20px;
+            box-shadow:  2px 2px 2px hsl(0, 0%, 0%);
+            color: white;
+        }
+
+        .list-item {
+            padding-left: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        button {
+            height: 60px;
+            width: 60px;
+            border-radius: 50%;
+            box-shadow: 2px 2px 2px hsl(0, 0%, 0%);
+            background-color: blueviolet;
+            border: unset;
+            font-size: 32px;
+            color: white;
+            position: absolute;
+            right: 16px;
+            bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Einkaufsliste</h1>
+    </header>
+
+    
+    {% for row in all_items %}
+    <div class="list-item">
+        <input type="checkbox"> {{ row.name }}
+    </div>
+    {% endfor %}
+
+    <button onclick="addItem()">
+        +
+    </button>
+
+    <script>
+        function addItem() {
+            let itemName = prompt('Neues Element hinzufügen')
+            let token = '{{ csrf_token }}';
+            let formData = new FormData();
+            formData.append('itemName', itemName)
+            formData.append('csrfmiddlewaretoken', token);
+            
+            fetch('/mylist/', {
+                method: 'POST',
+                body: formData
+            });
+        }
+    </script>
+    
+</body>
+</html>
