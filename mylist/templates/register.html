@@ -1,3 +1,17 @@
+<!--
+=================================================================================
+register.html – Registrierungsseite
+=================================================================================
+Djangos UserCreationForm stellt drei Felder bereit: username, password1, password2.
+Das Formular prüft automatisch:
+  - Ob der Benutzername noch nicht vergeben ist
+  - Ob beide Passwörter übereinstimmen
+  - Ob das Passwort die Sicherheitsregeln erfüllt (min. 8 Zeichen, nicht zu einfach)
+Fehlermeldungen werden über form.errors ausgelesen und angezeigt.
+Nach erfolgreicher Registrierung wird der Benutzer direkt eingeloggt und zu
+/mylist/ weitergeleitet. Außerdem werden automatisch zwei leere Listen angelegt.
+=================================================================================
+-->
 <!DOCTYPE html>
 <html lang="de">
 <head>

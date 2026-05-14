@@ -1,38 +1,71 @@
-"""
-URL configuration for Einkaufsliste project.
+# =============================================================================
+# urls.py – URL-Konfiguration der Anwendung
+# =============================================================================
+# Diese Datei verbindet URLs (Webadressen) mit den zugehörigen Views (Funktionen).
+# Wenn ein Benutzer eine URL aufruft, sucht Django hier nach einem passenden
+# Eintrag und führt die verknüpfte View-Funktion aus.
+#
+# Aufbau eines Eintrags:
+#   path('url/', view_funktion)
+#
+# <int:item_id> ist ein Platzhalter: Django liest die Zahl aus der URL heraus
+# und übergibt sie als Parameter an die View-Funktion.
+# Beispiel: /mylist/delete/7/ → delete_item(request, item_id=7)
+# =============================================================================
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/6.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path
-from django.views.generic import RedirectView
-from django.contrib.auth.views import LoginView, LogoutView
-from mylist.views import mylist, delete_item, edit_item, toggle_item, create_list, events, delete_event, notes, delete_note, register
+from django.views.generic import RedirectView              # Einfache Weiterleitung ohne eigene View
+from django.contrib.auth.views import LoginView, LogoutView  # Djangos eingebaute Login/Logout-Views
+from mylist.views import (
+    mylist, delete_item, edit_item, toggle_item,
+    create_list, events, delete_event,
+    notes, delete_note, register
+)
 
 urlpatterns = [
+
+    # Startseite → leitet direkt zur Login-Seite weiter.
     path('', RedirectView.as_view(url='/login/')),
-    path('login/', LoginView.as_view(template_name='login.html'), name='login'),
-    path('logout/', LogoutView.as_view(next_page='/login/'), name='logout'),
-    path('register/', register, name='register'),
+
+    # Django-Adminbereich (für Entwickler, unter /admin/).
     path('admin/', admin.site.urls),
+
+    # Anmelden: Djangos eingebaute LoginView verwendet das Template login.html.
+    path('login/', LoginView.as_view(template_name='login.html'), name='login'),
+
+    # Abmelden: Nach dem Logout wird der Benutzer zur Login-Seite weitergeleitet.
+    # Wichtig: Logout funktioniert nur per POST-Anfrage (Sicherheit in Django 5+).
+    path('logout/', LogoutView.as_view(next_page='/login/'), name='logout'),
+
+    # Registrierung: Eigene View, die neue Benutzerkonten anlegt.
+    path('register/', register, name='register'),
+
+    # Hauptseite der App: zeigt alle Listen des eingeloggten Benutzers.
+    # Nimmt auch POST-Anfragen an (neuen Eintrag hinzufügen).
     path('mylist/', mylist),
+
+    # Einen Listeneintrag löschen. Die ID des Eintrags steht in der URL.
     path('mylist/delete/<int:item_id>/', delete_item),
-    path('mylist/toggle/<int:item_id>/', toggle_item),
+
+    # Einen Listeneintrag umbenennen.
     path('mylist/edit/<int:item_id>/', edit_item),
+
+    # Einen Listeneintrag abhaken / Haken entfernen.
+    path('mylist/toggle/<int:item_id>/', toggle_item),
+
+    # Eine neue Liste erstellen.
     path('mylist/create-list/', create_list),
+
+    # Kalendertermine abrufen (GET) oder hinzufügen (POST).
     path('mylist/events/', events),
+
+    # Einen Kalendertermin löschen.
     path('mylist/events/delete/<int:event_id>/', delete_event),
+
+    # Notizen abrufen (GET) oder hinzufügen (POST).
     path('mylist/notes/', notes),
+
+    # Eine Notiz löschen.
     path('mylist/notes/delete/<int:note_id>/', delete_note),
 ]

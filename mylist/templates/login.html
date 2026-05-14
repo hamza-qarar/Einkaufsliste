@@ -1,3 +1,14 @@
+<!--
+=================================================================================
+login.html – Anmeldeseite
+=================================================================================
+Django verarbeitet dieses Template mit der eingebauten LoginView.
+- Bei GET-Anfragen (normaler Seitenaufruf) wird das leere Formular angezeigt.
+- Bei POST-Anfragen (Formular abgesendet) prüft Django Benutzername und Passwort.
+- Bei Erfolg → Weiterleitung zu LOGIN_REDIRECT_URL (/mylist/)
+- Bei Misserfolg → form.errors ist nicht leer → Fehlermeldung wird angezeigt
+=================================================================================
+-->
 <!DOCTYPE html>
 <html lang="de">
 <head>

@@ -1,12 +1,37 @@
+<!--
+=================================================================================
+shoppinglist.html – Hauptseite der Anwendung
+=================================================================================
+Diese Datei ist ein Django-Template. Sie enthält:
+  - HTML  → Struktur der Seite (was angezeigt wird)
+  - CSS   → Gestaltung (wie es aussieht)
+  - JS    → Interaktivität (was beim Klicken passiert)
+
+Django-Template-Tags werden von Django serverseitig verarbeitet, BEVOR die
+Seite an den Browser gesendet wird:
+  {{ variable }}        → gibt einen Wert aus (z. B. {{ liste.name }})
+  {% for x in liste %}  → Schleife
+  {% if bedingung %}    → Bedingung
+  {% csrf_token %}      → fügt ein Sicherheitstoken gegen CSRF-Angriffe ein
+=================================================================================
+-->
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
+    <!-- viewport: sorgt dafür, dass die Seite auf Mobilgeräten korrekt skaliert -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gemeinschaftsplanung</title>
+    <!-- Google Fonts: lädt die Schriftart „Inter" aus dem Internet -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <style>
+        /*
+        ── CSS-Variablen ──────────────────────────────────────────────────────
+        :root definiert globale Variablen, die überall im CSS wiederverwendet
+        werden können. So muss eine Farbe nur an einer Stelle geändert werden.
+        var(--magenta) ruft den Wert der Variable ab.
+        */
         :root {
             --magenta: #c0006a;
             --bordeaux: #7a0035;
@@ -134,6 +159,12 @@
             align-items: start;
         }
 
+        /*
+        ── Responsive Design (Media Query) ───────────────────────────────────
+        Alles innerhalb von @media (max-width: 768px) gilt nur für Bildschirme,
+        die schmaler als 768px sind – also Smartphones im Hochformat.
+        Auf diesen Geräten wird das Layout auf eine einzige Spalte umgestellt.
+        */
         @media (max-width: 768px) {
             .main-layout {
                 grid-template-columns: 1fr;
@@ -774,7 +805,21 @@
 
     <div class="main-layout">
 
-        <!-- Linke Spalte: Listen -->
+        <!--
+        ── Linke Spalte: Listen ──────────────────────────────────────────────
+        Die Listen werden in zwei unabhängige Flex-Spalten aufgeteilt:
+        - Linke Spalte: Listen mit ungerader Position (1., 3., 5. ...)
+        - Rechte Spalte: Listen mit gerader Position (2., 4., 6. ...)
+
+        forloop.counter zählt die aktuelle Iteration (beginnend bei 1).
+        divisibleby:2 prüft, ob die Zahl durch 2 teilbar ist.
+        „not divisibleby:2" → ungerade → linke Spalte
+        „divisibleby:2"     → gerade   → rechte Spalte
+
+        Dieses Prinzip nennt sich „Masonry-ähnliches Layout": Beide Spalten
+        sind unabhängig, sodass eine lange Liste in einer Spalte die andere
+        nicht nach unten verschiebt.
+        -->
         <div class="lists-column">
             <div class="lists-col">
                 {% for liste in all_lists %}{% if not forloop.counter|divisibleby:2 %}
@@ -919,9 +964,25 @@
     <div class="fab-tooltip">Neue Liste</div>
 
     <script>
+        /*
+        ════════════════════════════════════════════════════════════════════════
+        JavaScript – Interaktivität der Seite
+        ════════════════════════════════════════════════════════════════════════
+        JavaScript läuft im Browser des Benutzers (clientseitig).
+        Es kommuniziert mit dem Django-Server über fetch() – das ist eine
+        moderne Methode, um HTTP-Anfragen zu senden, ohne die Seite neu zu laden.
+
+        fetch() sendet immer einen CSRF-Token mit. Das ist ein von Django
+        generiertes Sicherheitstoken ({{ csrf_token }}), das verhindert, dass
+        fremde Webseiten im Namen des Benutzers Aktionen auslösen können.
+        ════════════════════════════════════════════════════════════════════════
+        */
+
+        // Speichert die ID der aktuell ausgewählten Liste (für das Hinzufügen von Einträgen).
         let currentListId = null;
 
-        // --- Eintrag hinzufügen ---
+        // ── Eintrag hinzufügen ────────────────────────────────────────────────
+        // Öffnet das Modal-Fenster und merkt sich, welche Liste gemeint ist.
         function addItem(listId, listName) {
             currentListId = listId;
             document.getElementById('modal-item-title').textContent = 'Neuer Eintrag in "' + listName + '"';
@@ -930,15 +991,19 @@
             setTimeout(() => document.getElementById('modal-item-input').focus(), 50);
         }
 
+        // Wird aufgerufen, wenn der Benutzer auf „Hinzufügen" klickt.
+        // Sendet den neuen Eintrag per POST an den Server und lädt die Seite neu.
         function confirmAdd() {
             let itemName = document.getElementById('modal-item-input').value.trim();
-            if (!itemName) return;
+            if (!itemName) return; // Leere Einträge werden ignoriert
             closeModal('modal-item');
-            let token = '{{ csrf_token }}';
-            let formData = new FormData();
+            let token = '{{ csrf_token }}'; // Django-Sicherheitstoken (serverseitig eingefügt)
+            let formData = new FormData(); // Formular-Daten-Objekt (wie ein HTML-Formular)
             formData.append('itemName', itemName);
             formData.append('list_id', currentListId);
             formData.append('csrfmiddlewaretoken', token);
+            // fetch() sendet die Anfrage an den Server. .then() wird aufgerufen,
+            // sobald der Server geantwortet hat – dann wird die Seite neu geladen.
             fetch('/mylist/', { method: 'POST', body: formData })
                 .then(() => location.reload());
         }
@@ -988,7 +1053,10 @@
                 .then(() => location.reload());
         }
 
-        // --- Eintrag abhaken ---
+        // ── Eintrag abhaken ────────────────────────────────────────────────
+        // Wird bei jedem Klick auf eine Checkbox aufgerufen.
+        // Sendet eine POST-Anfrage an den Server, der den done-Wert umkehrt.
+        // Die Seite wird NICHT neu geladen – die Checkbox bleibt visuell aktiv.
         function toggleItem(id, checkbox) {
             let token = '{{ csrf_token }}';
             let formData = new FormData();
@@ -996,7 +1064,10 @@
             fetch('/mylist/toggle/' + id + '/', { method: 'POST', body: formData });
         }
 
-        // --- Eintrag löschen ---
+        // ── Eintrag löschen ────────────────────────────────────────────────
+        // Löscht den Eintrag auf dem Server und entfernt ihn direkt aus dem DOM,
+        // ohne die gesamte Seite neu zu laden. btn.closest('.list-item') sucht
+        // das nächste übergeordnete Element mit der Klasse „list-item".
         function deleteItem(id, btn) {
             let token = '{{ csrf_token }}';
             let formData = new FormData();
@@ -1005,63 +1076,97 @@
                 .then(() => btn.closest('.list-item').remove());
         }
 
-        // --- Modal-Hilfsfunktionen ---
+        // ── Modal-Hilfsfunktionen ──────────────────────────────────────────
+        // Modals sind Overlay-Fenster, die über der Seite erscheinen.
+        // Sie werden durch das Hinzufügen/Entfernen der CSS-Klasse „open" gesteuert.
         function closeModal(id) {
             document.getElementById(id).classList.remove('open');
         }
 
+        // Schließt das Modal, wenn der Benutzer außerhalb (auf das dunkle Overlay) klickt.
         function closeOnOverlay(event, id) {
             if (event.target === document.getElementById(id)) closeModal(id);
         }
 
-        // ══════════════════════════════
-        // Kalender
-        // ══════════════════════════════
+        /*
+        ════════════════════════════════════════════════════════════════════════
+        Kalender
+        ════════════════════════════════════════════════════════════════════════
+        Der Kalender wird vollständig in JavaScript gebaut (nicht in HTML).
+        Beim Laden der Seite werden alle Termine vom Server geladen (loadEvents),
+        dann wird der Kalender gezeichnet (renderCalendar).
+
+        Termine werden in einem Objekt gespeichert:
+          allEvents = { '2025-06-15': [{id: 1, title: 'Zahnarzt'}], ... }
+        Das ermöglicht schnellen Zugriff: allEvents['2025-06-15'] gibt alle
+        Termine dieses Tages zurück.
+        ════════════════════════════════════════════════════════════════════════
+        */
+
         const MONTHS = ['Januar','Februar','März','April','Mai','Juni',
                         'Juli','August','September','Oktober','November','Dezember'];
-        const today = new Date();
-        let calYear  = today.getFullYear();
-        let calMonth = today.getMonth();
-        let selectedDate = null;
-        let allEvents = {};   // { 'YYYY-MM-DD': [{id, title}, ...] }
-        let selectedEventDate = null;
+        const today = new Date();      // Heutiges Datum (für Hervorhebung)
+        let calYear  = today.getFullYear(); // Aktuell angezeigtes Jahr
+        let calMonth = today.getMonth();    // Aktuell angezeigter Monat (0 = Januar)
+        let selectedDate = null;            // Zuletzt angeklickter Tag ('YYYY-MM-DD')
+        let allEvents = {};                 // Alle Termine, gruppiert nach Datum
+        let selectedEventDate = null;       // Datum, für das ein neuer Termin angelegt wird
 
+        // Wandelt Jahr, Monat, Tag in einen String im Format 'YYYY-MM-DD' um.
+        // padStart(2,'0') füllt einstellige Zahlen mit einer führenden Null auf (z. B. '06').
         function toDateStr(y, m, d) {
             return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
         }
 
+        // Lädt alle Termine des Benutzers vom Server und zeichnet den Kalender neu.
+        // „async/await" bedeutet: JavaScript wartet auf die Serverantwort, bevor es weiter macht.
         async function loadEvents() {
-            const res = await fetch('/mylist/events/');
-            const data = await res.json();
+            const res = await fetch('/mylist/events/'); // GET-Anfrage an den Server
+            const data = await res.json();              // Antwort als JSON-Objekt lesen
             allEvents = {};
+            // Termine nach Datum gruppieren:
             for (const e of data.events) {
-                if (!allEvents[e.date]) allEvents[e.date] = [];
-                allEvents[e.date].push(e);
+                if (!allEvents[e.date]) allEvents[e.date] = []; // Neues Array für diesen Tag
+                allEvents[e.date].push(e);                       // Termin hinzufügen
             }
             renderCalendar();
+            // Falls ein Tag ausgewählt ist, wird das Tages-Panel ebenfalls aktualisiert.
             if (selectedDate) renderDayPanel(selectedDate);
         }
 
+        // Zeichnet das Kalender-Gitter für den aktuellen Monat.
         function renderCalendar() {
+            // Monatsname und Jahr in der Navigationsleiste anzeigen.
             document.getElementById('cal-title').textContent =
                 `${MONTHS[calMonth]} ${calYear}`;
 
-            const firstDow = (new Date(calYear, calMonth, 1).getDay() + 6) % 7; // Mo=0
+            // Berechnet, an welchem Wochentag der Monat beginnt.
+            // JavaScript: Sonntag=0. Mit (+ 6) % 7 wird Montag=0.
+            const firstDow = (new Date(calYear, calMonth, 1).getDay() + 6) % 7;
+
+            // Anzahl der Tage im Monat (Tag 0 des Folgemonats = letzter Tag des aktuellen).
             const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
             const todayStr = toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
 
             let html = '';
+
+            // Leere Zellen vor dem ersten Tag des Monats einfügen.
             for (let i = 0; i < firstDow; i++)
                 html += '<div class="cal-day cal-empty"></div>';
 
+            // Für jeden Tag des Monats eine Zelle erzeugen.
             for (let d = 1; d <= daysInMonth; d++) {
                 const ds = toDateStr(calYear, calMonth, d);
+
+                // CSS-Klassen dynamisch zusammensetzen:
                 const cls = [
                     'cal-day',
-                    ds === todayStr    ? 'cal-today'    : '',
-                    ds === selectedDate ? 'cal-selected' : '',
-                    allEvents[ds]      ? 'cal-has-events': '',
-                ].filter(Boolean).join(' ');
+                    ds === todayStr     ? 'cal-today'     : '', // Heute hervorheben
+                    ds === selectedDate ? 'cal-selected'  : '', // Ausgewählter Tag
+                    allEvents[ds]       ? 'cal-has-events': '', // Hat Termine → Punkt anzeigen
+                ].filter(Boolean).join(' '); // Leere Strings entfernen und mit Leerzeichen verbinden
+
                 const dot = allEvents[ds] ? '<span class="event-dot"></span>' : '';
                 html += `<div class="${cls}" onclick="selectDay('${ds}')">${d}${dot}</div>`;
             }
@@ -1138,9 +1243,15 @@
 
         loadEvents();
 
-        // ══════════════════════════════
-        // Notizen
-        // ══════════════════════════════
+        /*
+        ════════════════════════════════════════════════════════════════════════
+        Notizen
+        ════════════════════════════════════════════════════════════════════════
+        Notizen funktionieren ähnlich wie der Kalender: Beim Laden der Seite
+        werden alle Notizen vom Server abgerufen (loadNotes) und ins HTML
+        eingefügt (renderNotes). Löschen passiert direkt ohne Seitenneuladen.
+        ════════════════════════════════════════════════════════════════════════
+        */
         async function loadNotes() {
             const res = await fetch('/mylist/notes/');
             const data = await res.json();
@@ -1184,11 +1295,17 @@
                     '<p class="notes-empty">Noch keine Notizen.</p>';
         }
 
+        // Schützt gegen XSS-Angriffe: Sonderzeichen in Benutzereingaben werden
+        // in harmlose HTML-Entities umgewandelt, bevor sie ins DOM eingefügt werden.
+        // Ohne diese Funktion könnte ein Angreifer HTML/JavaScript in Notizen einschleusen.
         function escapeHtml(str) {
             return str.replace(/&/g,'&amp;').replace(/</g,'&lt;')
                       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         }
 
+        // ── Seite initialisieren ───────────────────────────────────────────
+        // Diese beiden Funktionen werden sofort beim Laden der Seite aufgerufen.
+        // Sie füllen Kalender und Notizen mit den Daten vom Server.
         loadNotes();
     </script>
 
