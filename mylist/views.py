@@ -13,6 +13,8 @@ def register(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            ShoppingList.objects.create(name='Besorgungen', user=user)
+            ShoppingList.objects.create(name='Erledigungen', user=user)
             login(request, user)
             return redirect('/mylist/')
     else:
