@@ -31,6 +31,16 @@ def mylist(request):
 
 
 @login_required
+def toggle_item(request, item_id):
+    if request.method == 'POST':
+        item = get_object_or_404(ShoppingItem, id=item_id, shopping_list__user=request.user)
+        item.done = not item.done
+        item.save()
+        return JsonResponse({'success': True, 'done': item.done})
+    return JsonResponse({'success': False}, status=405)
+
+
+@login_required
 def delete_item(request, item_id):
     if request.method == 'POST':
         item = get_object_or_404(ShoppingItem, id=item_id, shopping_list__user=request.user)

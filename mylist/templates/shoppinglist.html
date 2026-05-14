@@ -765,7 +765,7 @@
                     </div>
                     {% for row in liste.items.all %}
                     <div class="list-item">
-                        <input type="checkbox" id="item-{{ row.id }}">
+                        <input type="checkbox" id="item-{{ row.id }}" {% if row.done %}checked{% endif %} onchange="toggleItem({{ row.id }}, this)">
                         <label for="item-{{ row.id }}">{{ row.name }}</label>
                         <div class="item-actions">
                             <button class="edit-btn" onclick="editItem({{ row.id }}, '{{ row.name|escapejs }}')">🖋</button>
@@ -791,7 +791,7 @@
                     </div>
                     {% for row in liste.items.all %}
                     <div class="list-item">
-                        <input type="checkbox" id="item-{{ row.id }}">
+                        <input type="checkbox" id="item-{{ row.id }}" {% if row.done %}checked{% endif %} onchange="toggleItem({{ row.id }}, this)">
                         <label for="item-{{ row.id }}">{{ row.name }}</label>
                         <div class="item-actions">
                             <button class="edit-btn" onclick="editItem({{ row.id }}, '{{ row.name|escapejs }}')">🖋</button>
@@ -965,6 +965,14 @@
             formData.append('csrfmiddlewaretoken', token);
             fetch('/mylist/edit/' + currentEditId + '/', { method: 'POST', body: formData })
                 .then(() => location.reload());
+        }
+
+        // --- Eintrag abhaken ---
+        function toggleItem(id, checkbox) {
+            let token = '{{ csrf_token }}';
+            let formData = new FormData();
+            formData.append('csrfmiddlewaretoken', token);
+            fetch('/mylist/toggle/' + id + '/', { method: 'POST', body: formData });
         }
 
         // --- Eintrag löschen ---

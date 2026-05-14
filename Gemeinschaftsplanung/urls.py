@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path
 from django.views.generic import RedirectView
 from django.contrib.auth.views import LoginView, LogoutView
-from mylist.views import mylist, delete_item, edit_item, create_list, events, delete_event, notes, delete_note, register
+from mylist.views import mylist, delete_item, edit_item, toggle_item, create_list, events, delete_event, notes, delete_note, register
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/login/')),
@@ -28,6 +28,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('mylist/', mylist),
     path('mylist/delete/<int:item_id>/', delete_item),
+    path('mylist/toggle/<int:item_id>/', toggle_item),
     path('mylist/edit/<int:item_id>/', edit_item),
     path('mylist/create-list/', create_list),
     path('mylist/events/', events),
